@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌿 Plant Disease Detection | AI-Powered Diagnosis</title>
+  <meta name="description" content="AI-powered plant disease detection. Upload a leaf photo to get instant diagnosis, treatment recommendations, and prevention tips." />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="../static/css/style.css" />
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════════════════════════ -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="nav-logo" href="#">
+        <span class="logo-icon">🌿</span>
+        <span class="logo-text">PlantDoc <span class="logo-ai">AI</span></span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#upload-section">Detect</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#supported-plants">Plants</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Language Toggle -->
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+          <span>/</span>
+          <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">हि</button>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode" aria-label="Toggle dark mode">
+          <i class="fas fa-moon" id="theme-icon"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO SECTION
+  ══════════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-bg-pattern"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fas fa-leaf"></i>
+        <span data-en="AI-Powered Plant Health" data-hi="AI संचालित पौधे की सेहत">AI-Powered Plant Health</span>
+      </div>
+      <h1 class="hero-title" data-en="Detect Plant Diseases <br><span class='gradient-text'>Instantly with AI</span>" data-hi="पौधों की बीमारियाँ <br><span class='gradient-text'>AI से तुरंत पहचानें</span>">
+        Detect Plant Diseases <br><span class="gradient-text">Instantly with AI</span>
+      </h1>
+      <p class="hero-subtitle" data-en="Upload a photo of any plant leaf. Our deep learning model analyzes it in seconds and provides diagnosis, treatment, and prevention guidance." data-hi="किसी भी पत्ते की फोटो अपलोड करें। हमारा AI मॉडल सेकंडों में विश्लेषण करके उपचार और रोकथाम के सुझाव देता है।">
+        Upload a photo of any plant leaf. Our deep learning model analyzes it in seconds and provides diagnosis, treatment, and prevention guidance.
+      </p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">38+</span>
+          <span class="stat-label" data-en="Disease Classes" data-hi="रोग वर्ग">Disease Classes</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-number">95%+</span>
+          <span class="stat-label" data-en="Accuracy" data-hi="सटीकता">Accuracy</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-number">&lt;1s</span>
+          <span class="stat-label" data-en="Detection Time" data-hi="पहचान समय">Detection Time</span>
+        </div>
+      </div>
+      <a href="#upload-section" class="hero-cta">
+        <i class="fas fa-camera"></i>
+        <span data-en="Start Diagnosis" data-hi="निदान शुरू करें">Start Diagnosis</span>
+      </a>
+    </div>
+    <div class="hero-illustration">
+      <div class="leaf-float leaf-1">🌿</div>
+      <div class="leaf-float leaf-2">🍃</div>
+      <div class="leaf-float leaf-3">🌱</div>
+      <div class="hero-circle circle-1"></div>
+      <div class="hero-circle circle-2"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       MAIN UPLOAD SECTION
+  ══════════════════════════════════════════════════════ -->
+  <section class="main-section" id="upload-section">
+    <div class="container">
+
+      <!-- Upload Card -->
+      <div class="upload-card">
+        <div class="card-header">
+          <h2 data-en="Upload Leaf Image" data-hi="पत्ते की तस्वीर अपलोड करें">Upload Leaf Image</h2>
+          <p data-en="Supports JPG, PNG, WEBP · Max 16MB" data-hi="JPG, PNG, WEBP समर्थित · अधिकतम 16MB">Supports JPG, PNG, WEBP · Max 16MB</p>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div class="drop-zone" id="dropZone"
+             ondrop="handleDrop(event)"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)">
+
+          <div class="drop-zone-content" id="dropContent">
+            <div class="drop-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <p class="drop-title" data-en="Drag & Drop your image here" data-hi="अपनी तस्वीर यहाँ खींचें और छोड़ें">Drag & Drop your image here</p>
+            <p class="drop-subtitle" data-en="or" data-hi="या">or</p>
+            <label class="btn-browse" for="fileInput">
+              <i class="fas fa-folder-open"></i>
+              <span data-en="Browse Files" data-hi="फ़ाइलें खोजें">Browse Files</span>
+            </label>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" hidden />
+          </div>
+
+          <!-- Image Preview (shown after upload) -->
+          <div class="preview-container" id="previewContainer" style="display:none">
+            <img id="previewImage" class="preview-img" alt="Plant leaf preview" />
+            <div class="preview-overlay">
+              <button class="btn-change" onclick="resetUpload()">
+                <i class="fas fa-redo"></i>
+                <span data-en="Change Image" data-hi="तस्वीर बदलें">Change Image</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Webcam Option -->
+        <div class="webcam-option">
+          <span data-en="Or use" data-hi="या उपयोग करें">Or use</span>
+          <button class="btn-webcam" id="webcamBtn" onclick="toggleWebcam()">
+            <i class="fas fa-video"></i>
+            <span data-en="Live Webcam" data-hi="लाइव वेबकैम">Live Webcam</span>
+          </button>
+        </div>
+
+        <!-- Webcam Container -->
+        <div id="webcamContainer" style="display:none" class="webcam-container">
+          <video id="webcamVideo" autoplay playsinline></video>
+          <div class="webcam-controls">
+            <button class="btn-capture" onclick="captureWebcam()">
+              <i class="fas fa-camera"></i>
+              <span data-en="Capture" data-hi="कैप्चर करें">Capture</span>
+            </button>
+            <button class="btn-stop-webcam" onclick="stopWebcam()">
+              <i class="fas fa-times"></i>
+              <span data-en="Stop" data-hi="बंद करें">Stop</span>
+            </button>
+          </div>
+          <canvas id="webcamCanvas" style="display:none"></canvas>
+        </div>
+
+        <!-- Analyze Button -->
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyzeImage()" disabled>
+          <i class="fas fa-search-plus"></i>
+          <span class="btn-text" data-en="Analyze Plant" data-hi="पौधे का विश्लेषण करें">Analyze Plant</span>
+          <div class="btn-loading" style="display:none">
+            <span class="spinner-dot"></span>
+            <span class="spinner-dot"></span>
+            <span class="spinner-dot"></span>
+          </div>
+        </button>
+      </div>
+
+      <!-- ── RESULTS SECTION ── -->
+      <div class="results-section" id="resultsSection" style="display:none">
+
+        <!-- Loading Overlay -->
+        <div class="loading-card" id="loadingCard">
+          <div class="loading-animation">
+            <div class="leaf-spinner">🌿</div>
+            <div class="loading-rings">
+              <div class="ring ring-1"></div>
+              <div class="ring ring-2"></div>
+              <div class="ring ring-3"></div>
+            </div>
+          </div>
+          <h3 data-en="Analyzing your plant..." data-hi="आपके पौधे का विश्लेषण हो रहा है...">Analyzing your plant...</h3>
+          <p data-en="Our AI is examining the leaf patterns" data-hi="हमारा AI पत्ते के पैटर्न की जांच कर रहा है">Our AI is examining the leaf patterns</p>
+        </div>
+
+        <!-- Result Card -->
+        <div class="result-card" id="resultCard" style="display:none">
+          <!-- Header with status -->
+          <div class="result-header" id="resultHeader">
+            <div class="result-icon-wrapper" id="resultIconWrapper">
+              <span class="result-emoji" id="resultEmoji">🔍</span>
+            </div>
+            <div class="result-title-group">
+              <div class="result-status-badge" id="resultStatusBadge"></div>
+              <h2 class="result-disease-name" id="resultDiseaseName"></h2>
+              <p class="result-subtitle" id="resultPlantType"></p>
+            </div>
+          </div>
+
+          <!-- Confidence + Severity Row -->
+          <div class="metrics-row">
+            <!-- Confidence -->
+            <div class="metric-card">
+              <label data-en="Confidence Score" data-hi="विश्वास स्कोर">Confidence Score</label>
+              <div class="confidence-bar-container">
+                <div class="confidence-bar-track">
+                  <div class="confidence-bar-fill" id="confidenceBarFill"></div>
+                </div>
+                <span class="confidence-value" id="confidenceValue">0%</span>
+              </div>
+            </div>
+
+            <!-- Severity -->
+            <div class="metric-card">
+              <label data-en="Severity Level" data-hi="गंभीरता स्तर">Severity Level</label>
+              <div class="severity-indicator" id="severityIndicator">
+                <div class="severity-pill" id="severityPill"></div>
+                <div class="severity-dots">
+                  <span class="severity-dot" id="dot1"></span>
+                  <span class="severity-dot" id="dot2"></span>
+                  <span class="severity-dot" id="dot3"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Processing Time -->
+            <div class="metric-card">
+              <label data-en="Processing Time" data-hi="प्रोसेसिंग समय">Processing Time</label>
+              <div class="processing-time" id="processingTime">
+                <i class="fas fa-bolt"></i>
+                <span id="timeValue">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Tabs -->
+          <div class="info-tabs">
+            <button class="tab-btn active" data-tab="description" onclick="switchTab(this, 'description')">
+              <i class="fas fa-info-circle"></i>
+              <span data-en="Description" data-hi="विवरण">Description</span>
+            </button>
+            <button class="tab-btn" data-tab="treatment" onclick="switchTab(this, 'treatment')">
+              <i class="fas fa-syringe"></i>
+              <span data-en="Treatment" data-hi="उपचार">Treatment</span>
+            </button>
+            <button class="tab-btn" data-tab="prevention" onclick="switchTab(this, 'prevention')">
+              <i class="fas fa-shield-alt"></i>
+              <span data-en="Prevention" data-hi="रोकथाम">Prevention</span>
+            </button>
+          </div>
+
+          <div class="tab-content">
+            <div class="tab-pane active" id="tab-description">
+              <p id="descriptionText"></p>
+            </div>
+            <div class="tab-pane" id="tab-treatment">
+              <p id="treatmentText"></p>
+            </div>
+            <div class="tab-pane" id="tab-prevention">
+              <p id="preventionText"></p>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="result-actions">
+            <button class="btn-secondary" onclick="resetAll()">
+              <i class="fas fa-redo"></i>
+              <span data-en="New Analysis" data-hi="नया विश्लेषण">New Analysis</span>
+            </button>
+            <button class="btn-primary" onclick="shareResult()">
+              <i class="fas fa-share-alt"></i>
+              <span data-en="Share Result" data-hi="परिणाम साझा करें">Share Result</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Card -->
+        <div class="error-card" id="errorCard" style="display:none">
+          <div class="error-icon">⚠️</div>
+          <h3 data-en="Analysis Failed" data-hi="विश्लेषण विफल">Analysis Failed</h3>
+          <p id="errorMessage"></p>
+          <button class="btn-secondary" onclick="resetAll()">
+            <i class="fas fa-redo"></i>
+            <span data-en="Try Again" data-hi="पुनः प्रयास करें">Try Again</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       HOW IT WORKS
+  ══════════════════════════════════════════════════════ -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-en="Simple Process" data-hi="सरल प्रक्रिया">Simple Process</span>
+        <h2 data-en="How It Works" data-hi="यह कैसे काम करता है">How It Works</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-icon">📸</div>
+          <h3 data-en="Upload Photo" data-hi="फोटो अपलोड करें">Upload Photo</h3>
+          <p data-en="Take a clear photo of the affected plant leaf or drag and drop from your device." data-hi="प्रभावित पत्ते की स्पष्ट फोटो लें या अपने डिवाइस से खींचें।">Take a clear photo of the affected plant leaf or drag and drop from your device.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-icon">🧠</div>
+          <h3 data-en="AI Analysis" data-hi="AI विश्लेषण">AI Analysis</h3>
+          <p data-en="Our MobileNetV2 deep learning model analyzes visual patterns to identify disease signatures." data-hi="हमारा MobileNetV2 डीप लर्निंग मॉडल रोग के संकेतों की पहचान के लिए पैटर्न का विश्लेषण करता है।">Our MobileNetV2 deep learning model analyzes visual patterns to identify disease signatures.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-icon">💊</div>
+          <h3 data-en="Get Diagnosis" data-hi="निदान पाएं">Get Diagnosis</h3>
+          <p data-en="Receive instant diagnosis with confidence score, severity level, treatment plan, and prevention tips." data-hi="विश्वास स्कोर, गंभीरता स्तर, उपचार और रोकथाम के सुझावों के साथ तत्काल निदान पाएं।">Receive instant diagnosis with confidence score, severity level, treatment plan, and prevention tips.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       SUPPORTED PLANTS
+  ══════════════════════════════════════════════════════ -->
+  <section class="supported-plants" id="supported-plants">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-en="Coverage" data-hi="कवरेज">Coverage</span>
+        <h2 data-en="Supported Plants" data-hi="समर्थित पौधे">Supported Plants</h2>
+        <p data-en="38+ disease classes across major crops" data-hi="प्रमुख फसलों में 38+ रोग वर्ग">38+ disease classes across major crops</p>
+      </div>
+      <div class="plants-grid">
+        <div class="plant-tag"><span class="plant-emoji">🍅</span> Tomato</div>
+        <div class="plant-tag"><span class="plant-emoji">🥔</span> Potato</div>
+        <div class="plant-tag"><span class="plant-emoji">🌽</span> Corn (Maize)</div>
+        <div class="plant-tag"><span class="plant-emoji">🍎</span> Apple</div>
+        <div class="plant-tag"><span class="plant-emoji">🍇</span> Grape</div>
+        <div class="plant-tag"><span class="plant-emoji">🫑</span> Bell Pepper</div>
+        <div class="plant-tag"><span class="plant-emoji">🍓</span> Strawberry</div>
+        <div class="plant-tag"><span class="plant-emoji">🫐</span> Blueberry</div>
+        <div class="plant-tag"><span class="plant-emoji">🍑</span> Peach</div>
+        <div class="plant-tag"><span class="plant-emoji">🍒</span> Cherry</div>
+        <div class="plant-tag"><span class="plant-emoji">🫘</span> Soybean</div>
+        <div class="plant-tag"><span class="plant-emoji">🌾</span> Wheat & More</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="logo-icon">🌿</span>
+          <span class="logo-text">PlantDoc AI</span>
+          <p data-en="Empowering farmers with AI-powered plant health diagnostics." data-hi="AI द्वारा संचालित पौधे की स्वास्थ्य जांच से किसानों को सशक्त बनाना।">Empowering farmers with AI-powered plant health diagnostics.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Tech Stack</h4>
+          <ul>
+            <li>Python + Flask</li>
+            <li>TensorFlow / Keras</li>
+            <li>MobileNetV2</li>
+            <li>OpenCV</li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Model</h4>
+          <ul>
+            <li>PlantVillage Dataset</li>
+            <li>Transfer Learning</li>
+            <li>38+ Disease Classes</li>
+            <li>95%+ Accuracy</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p data-en="Built with ❤️ for farmers worldwide | Open Source on GitHub" data-hi="दुनिया भर के किसानों के लिए ❤️ से बनाया गया | GitHub पर ओपन सोर्स">Built with ❤️ for farmers worldwide | Open Source on GitHub</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
