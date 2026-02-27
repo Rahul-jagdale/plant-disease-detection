@@ -7,7 +7,10 @@ Description : REST API for plant disease detection using deep learning
 Endpoints   : POST /predict, GET /health, GET /classes
 ====================================================================
 """
+from urllib import response
 
+from dotenv import load_dotenv
+load_dotenv()
 import os
 import io
 import json
@@ -22,6 +25,7 @@ from PIL import Image
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 import tensorflow as tf
+import google.generativeai as genai
 
 # ─────────────────────────────────────────────
 # LOGGING SETUP
@@ -54,6 +58,60 @@ class Config:
     CONFIDENCE_THRESHOLD = 0.4            # Below this = "Uncertain"
 
 app.config.from_object(Config)
+
+def get_ai_description(disease_name, confidence, is_healthy):
+    """Gemini AI se detailed description lao."""
+    
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        return None
+
+    try:
+        genai.configure(api_key=api_key)
+        gemini = genai.GenerativeModel("gemini-2.0-flash")
+
+        if is_healthy:
+            prompt = f"""A farmer's plant image was analyzed.
+Result: {disease_name} — Plant is HEALTHY (Confidence: {confidence:.1%})
+
+Reply in this EXACT JSON format only:
+{{
+    "description": "2-3 simple sentences about healthy plant appearance and what it means for the farmer",
+    "treatment": "2-3 sentences about maintaining plant health, watering, fertilization tips",
+    "prevention": "2-3 sentences about preventing future diseases for this specific plant"
+}}
+
+Use simple farmer-friendly language. Return only JSON, nothing else."""
+        else:
+            prompt = f"""A farmer's plant leaf image was analyzed by AI.
+Detected Disease: {disease_name}
+Confidence: {confidence:.1%}
+
+Reply in this EXACT JSON format only:
+{{
+    "description": "3-4 simple sentences: what disease is this, what causes it, what symptoms appear, how serious is it",
+    "treatment": "3-4 simple sentences: exact steps to treat, which products to use, how to apply them",
+    "prevention": "3-4 simple sentences: how to prevent this disease next time, best practices for this crop"
+}}
+
+Use simple farmer-friendly language. Be specific and practical. Return only JSON, nothing else."""
+
+        response = gemini.generate_content(prompt)
+        response_text = response.text.strip()
+
+        # JSON clean karo
+        import re
+        response_text = re.sub(r'```json|```', '', response_text).strip()
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        
+        if json_match:
+            ai_data = json.loads(json_match.group())
+            logger.info(f"✅ Gemini response for: {disease_name}")
+            return ai_data
+
+    except Exception as e:
+        logger.warning(f"Gemini API failed: {e} — using local info")
+        return None
 
 # ─────────────────────────────────────────────
 # DISEASE KNOWLEDGE BASE
@@ -429,6 +487,34 @@ def determine_severity(confidence):
     else:
         return "Severe"
 
+def get_ai_description(disease_name, confidence, is_healthy):
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        return None
+    try:
+        genai.configure(api_key=api_key)
+        gemini = genai.GenerativeModel("gemini-2.0-flash")
+        if is_healthy:
+            prompt = f"""Farmer's plant is HEALTHY.
+Plant: {disease_name} (Confidence: {confidence:.1%})
+Reply in EXACT JSON only:
+{{"description": "2-3 sentences about healthy plant","treatment": "2-3 sentences maintenance tips","prevention": "2-3 sentences prevention tips"}}
+Simple farmer language. JSON only."""
+        else:
+            prompt = f"""Farmer's plant has disease.
+Disease: {disease_name} (Confidence: {confidence:.1%})
+Reply in EXACT JSON only:
+{{"description": "3-4 sentences about this disease and symptoms","treatment": "3-4 sentences exact treatment steps","prevention": "3-4 sentences prevention methods"}}
+Simple farmer language. JSON only."""
+        response = gemini.generate_content(prompt)
+        import re
+        text = re.sub(r'```json|```', '', response.text).strip()
+        json_match = re.search(r'\{.*\}', text, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group())
+    except Exception as e:
+        logger.warning(f"Gemini failed: {e}")
+        return None
 
 def get_disease_info(class_name, confidence):
     """Get disease information from knowledge base."""
@@ -587,9 +673,23 @@ def predict():
     except Exception as e:
         logger.error(f"Model inference failed: {e}")
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
-
-    # ── Build response ────────────────────────────────────
+    
+    # ── Get disease info ───────────────────────────────────
     disease_info = get_disease_info(class_name, confidence)
+    ai_info = get_ai_description(
+        disease_info["disease_name"],
+        confidence,
+        disease_info["is_healthy"]
+    )
+
+    if ai_info:
+        disease_info["description"] = ai_info.get("description", disease_info["description"])
+        disease_info["treatment"]   = ai_info.get("treatment",   disease_info["treatment"])
+        disease_info["prevention"]  = ai_info.get("prevention",  disease_info["prevention"])
+        disease_info["ai_powered"]  = True
+    else:
+        disease_info["ai_powered"]  = False
+
     processing_time = round(time.time() - start_time, 3)
 
     response = {
@@ -605,7 +705,6 @@ def predict():
         f"Confidence: {confidence:.2%} | "
         f"Time: {processing_time}s"
     )
-
     return jsonify(response), 200
 
 
