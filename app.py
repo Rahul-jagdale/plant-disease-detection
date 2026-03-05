@@ -59,7 +59,7 @@ class Config:
 
 app.config.from_object(Config)
 
-def get_ai_description(disease_name, confidence, is_healthy):
+def get_ai_description(disease_name, confidence, is_healthy, lang='en'):
     """Gemini AI se detailed description lao."""
     
     api_key = os.getenv("GEMINI_API_KEY", "")
@@ -70,8 +70,11 @@ def get_ai_description(disease_name, confidence, is_healthy):
         genai.configure(api_key=api_key)
         gemini = genai.GenerativeModel("gemini-2.0-flash")
 
+        lang_instruction = "सभी जवाब हिंदी भाषा में दें।" if lang == 'hi' else "Reply in English language only."
+
         if is_healthy:
-            prompt = f"""A farmer's plant image was analyzed.
+            prompt = f"""{lang_instruction}
+A farmer's plant image was analyzed.
 Result: {disease_name} — Plant is HEALTHY (Confidence: {confidence:.1%})
 
 Reply in this EXACT JSON format only:
@@ -83,7 +86,8 @@ Reply in this EXACT JSON format only:
 
 Use simple farmer-friendly language. Return only JSON, nothing else."""
         else:
-            prompt = f"""A farmer's plant leaf image was analyzed by AI.
+            prompt = f"""{lang_instruction}
+A farmer's plant leaf image was analyzed by AI.
 Detected Disease: {disease_name}
 Confidence: {confidence:.1%}
 
@@ -487,25 +491,31 @@ def determine_severity(confidence):
     else:
         return "Severe"
 
-def get_ai_description(disease_name, confidence, is_healthy):
-    api_key = os.getenv("GEMINI_API_KEY", "")
+def get_ai_description(disease_name, confidence, is_healthy, lang='en'):
+    api_key = os.getenv("GEMINI_API_KEY", "AIzaSyASYLVPJgwMHOv8Qfm-wlRf4ue1s24ltwI")
     if not api_key:
         return None
     try:
         genai.configure(api_key=api_key)
         gemini = genai.GenerativeModel("gemini-2.0-flash")
+
+        lang_instruction = "Reply in Hindi language only." if lang == 'hi' else "Reply in English language only."
+
         if is_healthy:
-            prompt = f"""Farmer's plant is HEALTHY.
+            prompt = f"""{lang_instruction}
+     Farmer's plant is HEALTHY.
 Plant: {disease_name} (Confidence: {confidence:.1%})
 Reply in EXACT JSON only:
 {{"description": "2-3 sentences about healthy plant","treatment": "2-3 sentences maintenance tips","prevention": "2-3 sentences prevention tips"}}
 Simple farmer language. JSON only."""
         else:
-            prompt = f"""Farmer's plant has disease.
+            prompt = f"""{lang_instruction}
+Farmer's plant has disease.
 Disease: {disease_name} (Confidence: {confidence:.1%})
 Reply in EXACT JSON only:
 {{"description": "3-4 sentences about this disease and symptoms","treatment": "3-4 sentences exact treatment steps","prevention": "3-4 sentences prevention methods"}}
 Simple farmer language. JSON only."""
+
         response = gemini.generate_content(prompt)
         import re
         text = re.sub(r'```json|```', '', response.text).strip()
@@ -675,11 +685,13 @@ def predict():
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
     
     # ── Get disease info ───────────────────────────────────
+    lang = request.form.get('lang', 'en')
     disease_info = get_disease_info(class_name, confidence)
     ai_info = get_ai_description(
         disease_info["disease_name"],
         confidence,
-        disease_info["is_healthy"]
+        disease_info["is_healthy"],
+        lang
     )
 
     if ai_info:

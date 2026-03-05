@@ -1158,7 +1158,7 @@ button { cursor: pointer; border: none; font-family: var(--font-body); }
   .hero-title { font-size: 2rem; }
   .hero-stats { gap: 16px; }
   .stat-number { font-size: 1.4rem; }
-  .steps-grid { flex-direction: column; align-items: stretch; }
+  .steps-grid { flex-direction: column;  }
   .step-connector { width: 2px; height: 40px; margin: 0 auto; }
   .step-connector::after { content: '▼'; right: 50%; transform: translate(50%, 4px); }
   .metrics-row { grid-template-columns: 1fr; }
@@ -1171,4 +1171,22 @@ button { cursor: pointer; border: none; font-family: var(--font-body); }
   .result-header { flex-direction: column; text-align: center; }
   .info-tabs { overflow-x: auto; }
   .tab-btn { white-space: nowrap; }
+}
+.btn-voice {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s ease;
+}
+
+.btn-voice:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }

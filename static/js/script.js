@@ -283,6 +283,7 @@ async function analyzeImage() {
     // Build form data
     const formData = new FormData();
     formData.append('image', State.selectedFile);
+    formData.append('lang', State.currentLang);
 
     // Call API
     const response = await fetch(API_URL, {
@@ -299,6 +300,7 @@ async function analyzeImage() {
     // Display result
     displayResult(data);
     State.lastResult = data;
+    showVoiceButton();
 
   } catch (err) {
     console.error('Analysis error:', err);
@@ -641,3 +643,76 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// ── VOICE OUTPUT ────────────────────────────────────────────
+function speakResult() {
+    const lastResult = State.lastResult;
+    if (!lastResult) return;
+
+    const isHindi = State.currentLang === 'hi';
+    const btn = document.getElementById('voiceBtn');
+
+    // Already bol raha hai toh band karo
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        btn.innerHTML = '🔊 <span data-en="Listen" data-hi="सुनिए">Listen</span>';
+        btn.onclick = speakResult;
+        return;
+    }
+
+    const text = isHindi
+        ? `पौधे की जांच हो गई है। बीमारी का नाम है: ${lastResult.disease_name}। ${lastResult.description}। इलाज: ${lastResult.treatment}। बचाव: ${lastResult.prevention}`
+        : `Plant analysis complete. Disease: ${lastResult.disease_name}. ${lastResult.description}. Treatment: ${lastResult.treatment}. Prevention: ${lastResult.prevention}`;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Best voice dhundho
+    const voices = window.speechSynthesis.getVoices();
+
+    if (isHindi) {
+        // Hindi voice dhundho
+        const hindiVoice = voices.find(v => v.lang === 'hi-IN') ||
+                           voices.find(v => v.lang.startsWith('hi'));
+        if (hindiVoice) {
+            utterance.voice = hindiVoice;
+        }
+        utterance.lang  = 'hi-IN';
+        utterance.rate  = 0.8;
+        utterance.pitch = 1.0;
+    } else {
+        // Best English voice dhundho — Google ya Microsoft prefer karo
+        const goodVoice = voices.find(v => v.name.includes('Google') && v.lang === 'en-US') ||
+                          voices.find(v => v.name.includes('Microsoft') && v.lang === 'en-US') ||
+                          voices.find(v => v.lang === 'en-US');
+        if (goodVoice) utterance.voice = goodVoice;
+        utterance.lang  = 'en-US';
+        utterance.rate  = 0.85;
+        utterance.pitch = 1.0;
+    }
+
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => {
+        btn.innerHTML = '⏹️ <span>Stop</span>';
+        btn.onclick = speakResult;
+    };
+
+    utterance.onend = () => {
+        btn.innerHTML = '🔊 <span data-en="Listen" data-hi="सुनिए">Listen</span>';
+        btn.onclick = speakResult;
+    };
+
+    // Voices load hone ka wait karo
+    if (voices.length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.speak(utterance);
+        };
+    } else {
+        window.speechSynthesis.speak(utterance);
+    }
+}
+// Result aane ke baad voice button dikhao
+function showVoiceButton() {
+    const btn = document.getElementById('voiceBtn');
+    if (btn) btn.style.display = 'inline-flex';
+}
