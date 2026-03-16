@@ -94,6 +94,11 @@ function setLanguage(lang) {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
+
+  // Agar result already show ho raha hai toh re-fetch karo naye language mein
+  if (State.lastResult) {
+    refreshResultLanguage(lang);
+  }
 }
 
 function applyLanguage(lang) {
@@ -102,6 +107,52 @@ function applyLanguage(lang) {
     const text = el.getAttribute(`data-${lang}`);
     if (text) el.innerHTML = text;
   });
+}
+
+// Language change hone par result dobara fetch karo
+async function refreshResultLanguage(lang) {
+  const lastResult = State.lastResult;
+  if (!lastResult) return;
+
+  // Loading dikhao tabs mein
+  document.getElementById('descriptionText').textContent = lang === 'hi' ? 'अनुवाद हो रहा है...' : 'Translating...';
+  document.getElementById('treatmentText').textContent   = lang === 'hi' ? 'अनुवाद हो रहा है...' : 'Translating...';
+  document.getElementById('preventionText').textContent  = lang === 'hi' ? 'अनुवाद हो रहा है...' : 'Translating...';
+
+  // Badge bhi update karo
+  const badge = document.getElementById('resultStatusBadge');
+  if (badge) {
+    badge.textContent = lastResult.is_healthy
+      ? (lang === 'hi' ? '✓ स्वस्थ पौधा' : '✓ Healthy Plant')
+      : (lang === 'hi' ? '⚠ बीमारी मिली' : '⚠ Disease Detected');
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('image', State.selectedFile);
+    formData.append('lang', lang);
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Naye language mein text update karo
+      State.lastResult = data;
+      document.getElementById('descriptionText').textContent = data.description || '';
+      document.getElementById('treatmentText').textContent   = data.treatment   || '';
+      document.getElementById('preventionText').textContent  = data.prevention  || '';
+      document.getElementById('resultDiseaseName').textContent = data.disease_name;
+    }
+  } catch (err) {
+    console.error('Language refresh failed:', err);
+    document.getElementById('descriptionText').textContent = lastResult.description || '';
+    document.getElementById('treatmentText').textContent   = lastResult.treatment   || '';
+    document.getElementById('preventionText').textContent  = lastResult.prevention  || '';
+  }
 }
 
 function t(key, ...args) {
@@ -341,7 +392,10 @@ function displayResult(data) {
 
   // Status badge
   const badge = document.getElementById('resultStatusBadge');
-  badge.textContent = is_healthy ? '✓ Healthy Plant' : '⚠ Disease Detected';
+  const isHindi = State.currentLang === 'hi';
+  badge.textContent = is_healthy
+    ? (isHindi ? '✓ स्वस्थ पौधा' : '✓ Healthy Plant')
+    : (isHindi ? '⚠ बीमारी मिली' : '⚠ Disease Detected');
   badge.className   = `result-status-badge ${is_healthy ? 'badge-healthy' : 'badge-diseased'}`;
 
   // Disease name
