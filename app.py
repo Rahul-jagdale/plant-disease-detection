@@ -498,13 +498,27 @@ def get_ai_description(disease_name, confidence, is_healthy):
             prompt = f"""Farmer's plant is HEALTHY.
 Plant: {disease_name} (Confidence: {confidence:.1%})
 Reply in EXACT JSON only:
-{{"description": "2-3 sentences about healthy plant","treatment": "2-3 sentences maintenance tips","prevention": "2-3 sentences prevention tips"}}
+{{
+  "description_en": "2-3 sentences about healthy plant",
+  "treatment_en": "2-3 sentences maintenance tips",
+  "prevention_en": "2-3 sentences prevention tips",
+  "description_hi": "Hindi translation of description_en",
+  "treatment_hi": "Hindi translation of treatment_en",
+  "prevention_hi": "Hindi translation of prevention_en"
+}}
 Simple farmer language. JSON only."""
         else:
             prompt = f"""Farmer's plant has disease.
 Disease: {disease_name} (Confidence: {confidence:.1%})
 Reply in EXACT JSON only:
-{{"description": "3-4 sentences about this disease and symptoms","treatment": "3-4 sentences exact treatment steps","prevention": "3-4 sentences prevention methods"}}
+{{
+  "description_en": "3-4 sentences about this disease and symptoms",
+  "treatment_en": "3-4 sentences exact treatment steps",
+  "prevention_en": "3-4 sentences prevention methods",
+  "description_hi": "Hindi translation of description_en",
+  "treatment_hi": "Hindi translation of treatment_en",
+  "prevention_hi": "Hindi translation of prevention_en"
+}}
 Simple farmer language. JSON only."""
         response = gemini.generate_content(prompt)
         import re
@@ -683,11 +697,20 @@ def predict():
     )
 
     if ai_info:
-        disease_info["description"] = ai_info.get("description", disease_info["description"])
-        disease_info["treatment"]   = ai_info.get("treatment",   disease_info["treatment"])
-        disease_info["prevention"]  = ai_info.get("prevention",  disease_info["prevention"])
+        disease_info["description_en"] = ai_info.get("description_en", disease_info["description"])
+        disease_info["treatment_en"]   = ai_info.get("treatment_en",   disease_info["treatment"])
+        disease_info["prevention_en"]  = ai_info.get("prevention_en",  disease_info["prevention"])
+        disease_info["description_hi"] = ai_info.get("description_hi", disease_info["description"])
+        disease_info["treatment_hi"]   = ai_info.get("treatment_hi",   disease_info["treatment"])
+        disease_info["prevention_hi"]  = ai_info.get("prevention_hi",  disease_info["prevention"])
         disease_info["ai_powered"]  = True
     else:
+        disease_info["description_en"] = disease_info["description"]
+        disease_info["treatment_en"]   = disease_info["treatment"]
+        disease_info["prevention_en"]  = disease_info["prevention"]
+        disease_info["description_hi"] = "हिंदी अनुवाद उपलब्ध नहीं है। (Hindi translation not available)"
+        disease_info["treatment_hi"]   = "हिंदी अनुवाद उपलब्ध नहीं है।"
+        disease_info["prevention_hi"]  = "हिंदी अनुवाद उपलब्ध नहीं है।"
         disease_info["ai_powered"]  = False
 
     processing_time = round(time.time() - start_time, 3)
