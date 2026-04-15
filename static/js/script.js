@@ -107,6 +107,13 @@ function applyLanguage(lang) {
     const text = el.getAttribute(`data-${lang}`);
     if (text) el.innerHTML = text;
   });
+
+  // Update dynamic result text if available
+  if (State.lastResult) {
+    document.getElementById('descriptionText').textContent = State.lastResult[`description_${lang}`] || State.lastResult.description || 'No description available.';
+    document.getElementById('treatmentText').textContent   = State.lastResult[`treatment_${lang}`] || State.lastResult.treatment || 'No treatment information available.';
+    document.getElementById('preventionText').textContent  = State.lastResult[`prevention_${lang}`] || State.lastResult.prevention || 'No prevention information available.';
+  }
 }
 
 // Language change hone par result dobara fetch karo
@@ -442,9 +449,10 @@ function displayResult(data) {
     processing_time ? `${processing_time}s` : '—';
 
   // ── Tab Content ───────────────────────────────────────
-  document.getElementById('descriptionText').textContent = description || 'No description available.';
-  document.getElementById('treatmentText').textContent   = treatment   || 'No treatment information available.';
-  document.getElementById('preventionText').textContent  = prevention  || 'No prevention information available.';
+  const lang = State.currentLang; // 'en' or 'hi'
+  document.getElementById('descriptionText').textContent = data[`description_${lang}`] || description || 'No description available.';
+  document.getElementById('treatmentText').textContent   = data[`treatment_${lang}`] || treatment   || 'No treatment information available.';
+  document.getElementById('preventionText').textContent  = data[`prevention_${lang}`] || prevention  || 'No prevention information available.';
 
   // Reset to first tab
   switchTab(document.querySelector('.tab-btn'), 'description');

@@ -1,6 +1,5 @@
 from urllib import response
 from dotenv import load_dotenv
-load_dotenv()
 import os
 import io
 import json
@@ -9,6 +8,9 @@ import time
 import re
 from datetime import datetime
 from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+os.environ.setdefault("MPLCONFIGDIR", str(BASE_DIR / ".mplconfig"))
 
 import cv2
 import numpy as np
@@ -27,32 +29,47 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+load_dotenv(BASE_DIR / ".env")
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 
 class Config:
-    MODEL_PATH           = os.getenv("MODEL_PATH", "./model/plant_model.h5")
-    LABELS_PATH          = os.getenv("LABELS_PATH", "./model/class_labels.json")
+    MODEL_PATH           = os.getenv("MODEL_PATH", str(BASE_DIR / "model" / "plant_model.h5"))
+    LABELS_PATH          = os.getenv("LABELS_PATH", str(BASE_DIR / "model" / "class_labels.json"))
     IMG_SIZE             = (224, 224)
     MAX_FILE_SIZE        = 16 * 1024 * 1024
     ALLOWED_EXTS         = {'png', 'jpg', 'jpeg', 'webp', 'bmp'}
     CONFIDENCE_THRESHOLD = 0.4
+    USE_CLAHE_PREPROCESS = os.getenv("USE_CLAHE_PREPROCESS", "false").strip().lower() in {"1", "true", "yes", "on"}
 
 app.config.from_object(Config)
 
+def _resolve_path(path_value):
+    path = Path(path_value).expanduser()
+    if path.is_absolute():
+        return path
+    return (BASE_DIR / path).resolve()
+
+def _get_gemini_api_key():
+    return (
+        os.getenv("GEMINI_API_KEY")
+        or os.getenv("GOOGLE_API_KEY")
+        or ""
+    )
+
 def get_ai_description(disease_name, confidence, is_healthy, lang='en'):
-    api_key = os.getenv("GEMINI_API_KEY", "")
+    api_key = _get_gemini_api_key()
     if not api_key:
         return None
     try:
         genai.configure(api_key=api_key)
         gemini = genai.GenerativeModel("gemini-2.0-flash")
-        lang_instruction = "सभी जवाब हिंदी में दें।" if lang == 'hi' else "Reply in English only."
+        lang_instruction = "Reply in Hindi only." if lang == 'hi' else "Reply in English only."
         if is_healthy:
             prompt = f"""{lang_instruction}
 A farmer's plant image was analyzed.
-Result: {disease_name} — Plant is HEALTHY (Confidence: {confidence:.1%})
+Result: {disease_name} - Plant is HEALTHY (Confidence: {confidence:.1%})
 Reply in this EXACT JSON format only:
 {{
     "description": "2-3 simple sentences about healthy plant appearance and what it means for the farmer",
@@ -78,10 +95,10 @@ Use simple farmer-friendly language. Be specific and practical. Return only JSON
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if json_match:
             ai_data = json.loads(json_match.group())
-            logger.info(f"✅ Gemini response for: {disease_name}")
+            logger.info(f"Gemini response for: {disease_name}")
             return ai_data
     except Exception as e:
-        logger.warning(f"Gemini API failed: {e} — using local info")
+        logger.warning(f"Gemini API failed: {e} - using local info")
         return None
 
 DISEASE_INFO = {
@@ -326,38 +343,53 @@ class_labels = {}
 
 def load_model():
     global model, class_labels
-    model_path  = app.config['MODEL_PATH']
-    labels_path = app.config['LABELS_PATH']
+    model_path  = _resolve_path(app.config['MODEL_PATH'])
+    labels_path = _resolve_path(app.config['LABELS_PATH'])
 
-    if Path(model_path).exists():
+    if model_path.exists():
         try:
             model = tf.keras.models.load_model(model_path, compile=False)
-            logger.info(f"✅ Model loaded: {model_path}")
+            logger.info(f"Model loaded: {model_path}")
         except Exception as e:
-            logger.error(f"❌ Model load failed: {e}")
+            logger.error(f"Model load failed: {e}")
             model = None
     else:
-        logger.warning(f"⚠️ Model not found at {model_path} — running in demo mode")
+        logger.warning(f"Model not found at {model_path} - running in demo mode")
 
-    if Path(labels_path).exists():
+    if labels_path.exists():
         with open(labels_path) as f:
             raw = json.load(f)
         class_labels = {int(k): v for k, v in raw.items()}
-        logger.info(f"✅ Labels loaded: {len(class_labels)} classes")
+        logger.info(f"Labels loaded: {len(class_labels)} classes")
     else:
-        logger.warning("⚠️ Labels file not found")
+        logger.warning("Labels file not found")
+
+    if model is not None and class_labels:
+        try:
+            output_classes = int(model.output_shape[-1])
+            if output_classes != len(class_labels):
+                logger.warning(
+                    f"Model output classes ({output_classes}) do not match labels ({len(class_labels)}). "
+                    "Predictions may be inaccurate."
+                )
+        except Exception as e:
+            logger.warning(f"Could not validate model/label consistency: {e}")
 
 def preprocess_image(image_bytes):
     pil_img  = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-    cv_img   = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-    lab      = cv2.cvtColor(cv_img, cv2.COLOR_BGR2LAB)
-    l, a, b  = cv2.split(lab)
-    clahe    = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    l        = clahe.apply(l)
-    enhanced = cv2.merge([l, a, b])
-    enhanced = cv2.cvtColor(enhanced, cv2.COLOR_LAB2RGB)
-    resized  = cv2.resize(enhanced, app.config['IMG_SIZE'])
-    arr      = resized.astype(np.float32) / 255.0
+    resized  = pil_img.resize(app.config['IMG_SIZE'], Image.Resampling.BILINEAR)
+    rgb_img  = np.asarray(resized, dtype=np.uint8)
+
+    # Keep inference preprocessing aligned with training by default.
+    if app.config.get("USE_CLAHE_PREPROCESS", False):
+        lab      = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2LAB)
+        l, a, b  = cv2.split(lab)
+        clahe    = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        l        = clahe.apply(l)
+        enhanced = cv2.merge([l, a, b])
+        rgb_img  = cv2.cvtColor(enhanced, cv2.COLOR_LAB2RGB)
+
+    arr      = rgb_img.astype(np.float32) / 255.0
     return np.expand_dims(arr, axis=0)
 
 def determine_severity(confidence):
@@ -368,8 +400,6 @@ def determine_severity(confidence):
     else:
         return "Severe"
 
-def get_ai_description_local(disease_name, confidence, is_healthy, lang='en'):
-    return get_ai_description(disease_name, confidence, is_healthy, lang)
 
 def get_disease_info(class_name, confidence):
     info   = DISEASE_INFO.get(class_name, DISEASE_INFO["default"])
@@ -385,7 +415,7 @@ def get_disease_info(class_name, confidence):
 
 def demo_prediction():
     import random
-    demo_classes = list(DISEASE_INFO.keys())
+    demo_classes = [k for k in DISEASE_INFO.keys() if k != "default"]
     demo_class   = random.choice(demo_classes)
     confidence   = round(random.uniform(0.75, 0.98), 4)
     return demo_class, confidence
@@ -445,12 +475,22 @@ def predict():
     try:
         if model is not None:
             predictions = model.predict(img_array, verbose=0)
-            class_idx   = int(np.argmax(predictions[0]))
-            confidence  = float(predictions[0][class_idx])
+            if predictions.ndim != 2 or predictions.shape[0] == 0:
+                raise ValueError(f"Unexpected prediction shape: {predictions.shape}")
+
+            pred_vector = predictions[0].astype(np.float32)
+            score_sum = float(np.sum(pred_vector))
+
+            # Handle models that output logits instead of softmax probabilities.
+            if np.min(pred_vector) < 0.0 or score_sum < 0.99 or score_sum > 1.01:
+                pred_vector = tf.nn.softmax(pred_vector).numpy()
+
+            class_idx   = int(np.argmax(pred_vector))
+            confidence  = float(pred_vector[class_idx])
             class_name  = class_labels.get(class_idx, "Unknown")
-            top3_indices = np.argsort(predictions[0])[-3:][::-1]
+            top3_indices = np.argsort(pred_vector)[-3:][::-1]
             top3 = [
-                {"class": class_labels.get(int(i), "Unknown"), "confidence": float(predictions[0][i])}
+                {"class": class_labels.get(int(i), "Unknown"), "confidence": float(pred_vector[i])}
                 for i in top3_indices
             ]
         else:
@@ -478,11 +518,24 @@ def predict():
     )
 
     if ai_info:
-        disease_info["description"] = ai_info.get("description", disease_info["description"])
-        disease_info["treatment"]   = ai_info.get("treatment",   disease_info["treatment"])
-        disease_info["prevention"]  = ai_info.get("prevention",  disease_info["prevention"])
+        ai_description = ai_info.get("description")
+        ai_treatment   = ai_info.get("treatment")
+        ai_prevention  = ai_info.get("prevention")
+
+        disease_info["description_en"] = ai_description if lang == "en" and ai_description else disease_info["description"]
+        disease_info["treatment_en"]   = ai_treatment if lang == "en" and ai_treatment else disease_info["treatment"]
+        disease_info["prevention_en"]  = ai_prevention if lang == "en" and ai_prevention else disease_info["prevention"]
+        disease_info["description_hi"] = ai_description if lang == "hi" and ai_description else "Hindi translation not available."
+        disease_info["treatment_hi"]   = ai_treatment if lang == "hi" and ai_treatment else "Hindi translation not available."
+        disease_info["prevention_hi"]  = ai_prevention if lang == "hi" and ai_prevention else "Hindi translation not available."
         disease_info["ai_powered"]  = True
     else:
+        disease_info["description_en"] = disease_info["description"]
+        disease_info["treatment_en"]   = disease_info["treatment"]
+        disease_info["prevention_en"]  = disease_info["prevention"]
+        disease_info["description_hi"] = "Hindi translation not available."
+        disease_info["treatment_hi"]   = "Hindi translation not available."
+        disease_info["prevention_hi"]  = "Hindi translation not available."
         disease_info["ai_powered"]  = False
 
     processing_time = round(time.time() - start_time, 3)

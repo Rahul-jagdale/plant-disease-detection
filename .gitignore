@@ -57,6 +57,7 @@ flask_session/
 
 # TensorBoard
 runs/
+.mplconfig/
 
 # Uploads (temporary)
 uploads/
