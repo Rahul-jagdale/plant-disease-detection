@@ -1,3 +1,9 @@
+# tensorflow==2.21.0
+# Pillow
+# numpy
+# google-generativeai
+# python-dotenv
+# opencv-python-headless
 # ============================================================
 # Plant Disease Detection - Python Dependencies
 # ============================================================
