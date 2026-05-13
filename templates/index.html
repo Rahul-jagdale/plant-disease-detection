@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <!-- Icons -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <!-- jsPDF for report generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Styles -->
   <link rel="stylesheet" href="../static/css/style.css" />
 </head>
@@ -27,9 +29,10 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="#upload-section">Detect</a></li>
-        <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="#supported-plants">Plants</a></li>
+        <li><a href="#upload-section" data-en="Detect" data-hi="पहचान">Detect</a></li>
+        <li><a href="#how-it-works" data-en="How It Works" data-hi="कैसे काम करता है">How It Works</a></li>
+        <li><a href="#weather-section" data-en="Weather" data-hi="मौसम">Weather</a></li>
+        <li><a href="#supported-plants" data-en="Plants" data-hi="पौधे">Plants</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -275,6 +278,10 @@
             <button class="btn btn-voice" id="voiceBtn" onclick="speakResult()" style="display:none">
     🔊 <span data-en="Listen" data-hi="सुनिए">Listen</span>
 </button>
+            <button class="btn-primary" onclick="downloadReport()" style="background: var(--info); border-color: var(--info); color: #ffffff;">
+              <i class="fas fa-file-pdf"></i>
+              <span data-en="Download Report" data-hi="रिपोर्ट डाउनलोड करें">Download Report</span>
+            </button>
             <button class="btn-secondary" onclick="resetAll()">
               <i class="fas fa-redo"></i>
               <span data-en="New Analysis" data-hi="नया विश्लेषण">New Analysis</span>
@@ -332,6 +339,104 @@
           <p data-en="Receive instant diagnosis with confidence score, severity level, treatment plan, and prevention tips." data-hi="विश्वास स्कोर, गंभीरता स्तर, उपचार और रोकथाम के सुझावों के साथ तत्काल निदान पाएं।">Receive instant diagnosis with confidence score, severity level, treatment plan, and prevention tips.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       WEATHER SECTION
+  ══════════════════════════════════════════════════════ -->
+  <section class="weather-section" id="weather-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label" data-en="Local Conditions" data-hi="स्थानीय स्थिति">Local Conditions</span>
+        <h2 data-en="Farm Weather Forecast" data-hi="खेत का मौसम पूर्वानुमान">Farm Weather Forecast</h2>
+        <p data-en="Get real-time weather and 7-day forecast to plan your farming activities." data-hi="अपनी खेती की योजना बनाने के लिए वास्तविक समय का मौसम और 7-दिन का पूर्वानुमान प्राप्त करें।">Get real-time weather and 7-day forecast to plan your farming activities.</p>
+      </div>
+
+      <div class="weather-controls">
+        <div class="search-box">
+          <input type="text" id="weatherCityInput" placeholder="Enter city name..." data-en-placeholder="Enter city name..." data-hi-placeholder="शहर का नाम दर्ज करें...">
+          <button id="searchWeatherBtn" class="btn-primary">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+        <button id="locationWeatherBtn" class="btn-secondary">
+          <i class="fas fa-location-crosshairs"></i> <span data-en="My Location" data-hi="मेरा स्थान">My Location</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="weatherLoading" class="weather-loading" style="display: none;">
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+      </div>
+
+      <div class="weather-dashboard" id="weatherDashboard" style="display: none;">
+        <!-- Current Weather -->
+        <div class="current-weather-card">
+          <div class="weather-header">
+            <h3 id="weatherCityName">City Name</h3>
+            <span id="weatherDate">Today</span>
+          </div>
+          <div class="weather-main">
+            <div class="temp-display">
+              <span class="temp-value" id="currentTemp">--</span><span class="temp-unit">°C</span>
+            </div>
+            <div class="weather-icon-large" id="currentWeatherIcon">
+              ☀️
+            </div>
+          </div>
+          <p class="weather-desc" id="currentWeatherDesc">Clear</p>
+        </div>
+
+        <!-- Metrics -->
+        <div class="weather-metrics">
+          <div class="weather-metric-card">
+            <i class="fas fa-wind"></i>
+            <div>
+              <label data-en="Wind Speed" data-hi="हवा की गति">Wind Speed</label>
+              <span id="windSpeed">-- km/h</span>
+            </div>
+          </div>
+          <div class="weather-metric-card">
+            <i class="fas fa-droplet"></i>
+            <div>
+              <label data-en="Humidity" data-hi="नमी">Humidity</label>
+              <span id="humidity">-- %</span>
+            </div>
+          </div>
+          <div class="weather-metric-card">
+            <i class="fas fa-eye"></i>
+            <div>
+              <label data-en="Visibility" data-hi="दृश्यता">Visibility</label>
+              <span id="visibility">-- km</span>
+            </div>
+          </div>
+          <div class="weather-metric-card">
+            <i class="fas fa-leaf"></i>
+            <div>
+              <label data-en="AQI" data-hi="वायु गुणवत्ता">AQI</label>
+              <span id="aqi">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Day Forecast -->
+        <div class="forecast-container">
+          <h4 data-en="7-Day Forecast" data-hi="7-दिन का पूर्वानुमान">7-Day Forecast</h4>
+          <div class="forecast-grid" id="forecastGrid">
+            <!-- Forecast cards injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="weatherError" class="weather-error" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p data-en="Could not load weather data. Please try again." data-hi="मौसम डेटा लोड नहीं हो सका। कृपया पुनः प्रयास करें।">Could not load weather data. Please try again.</p>
+      </div>
+
     </div>
   </section>
 

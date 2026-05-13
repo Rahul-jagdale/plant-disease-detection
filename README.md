@@ -220,7 +220,7 @@ CONFIG = {
     "batch_size"     : 64,       # Increase if you have more GPU RAM
     "learning_rate"  : 5e-5,     # Lower LR for fine-tuning
     "fine_tune_at"   : 80,       # Unfreeze more layers for better accuracy
-}
+
 ```
 
 ### Monitor Training with TensorBoard

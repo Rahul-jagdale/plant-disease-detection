@@ -778,3 +778,388 @@ function showVoiceButton() {
     const btn = document.getElementById('voiceBtn');
     if (btn) btn.style.display = 'inline-flex';
 }
+
+// ─────────────────────────────────────────────
+// WEATHER DASHBOARD
+// ─────────────────────────────────────────────
+
+// Weather Icons Mapping (WMO codes to Emojis)
+const weatherIcons = {
+  0: '☀️', // Clear sky
+  1: '🌤️', // Mainly clear
+  2: '⛅', // Partly cloudy
+  3: '☁️', // Overcast
+  45: '🌫️', // Fog
+  48: '🌫️', // Depositing rime fog
+  51: '🌧️', // Drizzle: Light
+  53: '🌧️', // Drizzle: Moderate
+  55: '🌧️', // Drizzle: Dense
+  61: '🌧️', // Rain: Slight
+  63: '🌧️', // Rain: Moderate
+  65: '🌧️', // Rain: Heavy
+  71: '❄️', // Snow fall: Slight
+  73: '❄️', // Snow fall: Moderate
+  75: '❄️', // Snow fall: Heavy
+  95: '⛈️', // Thunderstorm: Slight or moderate
+  96: '⛈️', // Thunderstorm with slight hail
+  99: '⛈️'  // Thunderstorm with heavy hail
+};
+
+const weatherDescriptionsEn = {
+  0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+  45: 'Fog', 48: 'Depositing rime fog', 51: 'Light Drizzle', 53: 'Moderate Drizzle',
+  55: 'Dense Drizzle', 61: 'Slight Rain', 63: 'Moderate Rain', 65: 'Heavy Rain',
+  71: 'Slight Snow', 73: 'Moderate Snow', 75: 'Heavy Snow',
+  95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
+};
+
+const weatherDescriptionsHi = {
+  0: 'साफ आसमान', 1: 'मुख्यतः साफ', 2: 'आंशिक बादल', 3: 'बादल छाए रहेंगे',
+  45: 'कोहरा', 48: 'घना कोहरा', 51: 'हल्की बूंदाबांदी', 53: 'मध्यम बूंदाबांदी',
+  55: 'घनी बूंदाबांदी', 61: 'हल्की बारिश', 63: 'मध्यम बारिश', 65: 'भारी बारिश',
+  71: 'हल्की बर्फबारी', 73: 'मध्यम बर्फबारी', 75: 'भारी बर्फबारी',
+  95: 'आंधी तूफान', 96: 'आंधी तूफान और ओले', 99: 'आंधी तूफान और भारी ओले'
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize Weather
+  const searchWeatherBtn = document.getElementById('searchWeatherBtn');
+  const locationWeatherBtn = document.getElementById('locationWeatherBtn');
+  const weatherCityInput = document.getElementById('weatherCityInput');
+
+  if(searchWeatherBtn) {
+    searchWeatherBtn.addEventListener('click', () => {
+      if(weatherCityInput.value.trim()) {
+        getWeatherByCity(weatherCityInput.value.trim());
+      }
+    });
+  }
+
+  if(weatherCityInput) {
+    weatherCityInput.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter' && weatherCityInput.value.trim()) {
+        getWeatherByCity(weatherCityInput.value.trim());
+      }
+    });
+  }
+
+  if(locationWeatherBtn) {
+    locationWeatherBtn.addEventListener('click', getWeatherByLocation);
+  }
+
+  // Load default weather on load
+  getWeatherByCity("New Delhi");
+});
+
+function showWeatherLoading() {
+  document.getElementById('weatherDashboard').style.display = 'none';
+  document.getElementById('weatherError').style.display = 'none';
+  document.getElementById('weatherLoading').style.display = 'block';
+}
+
+function hideWeatherLoading() {
+  document.getElementById('weatherLoading').style.display = 'none';
+}
+
+function showWeatherError() {
+  hideWeatherLoading();
+  document.getElementById('weatherDashboard').style.display = 'none';
+  document.getElementById('weatherError').style.display = 'block';
+}
+
+async function getWeatherByLocation() {
+  if (!navigator.geolocation) {
+    showNotification("Geolocation is not supported by your browser", "error");
+    return;
+  }
+  showWeatherLoading();
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      await fetchWeatherData(lat, lon, State.currentLang === 'hi' ? "मेरा स्थान" : "My Location");
+    },
+    (error) => {
+      showWeatherError();
+      showNotification("Could not get your location.", "error");
+    }
+  );
+}
+
+async function getWeatherByCity(city) {
+  showWeatherLoading();
+  try {
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+    const geoData = await geoRes.json();
+
+    if (!geoData.results || geoData.results.length === 0) {
+      throw new Error("City not found");
+    }
+    const { latitude, longitude, name, admin1 } = geoData.results[0];
+    const locationName = admin1 ? `${name}, ${admin1}` : name;
+    await fetchWeatherData(latitude, longitude, locationName);
+  } catch (err) {
+    console.error("City Search Error:", err);
+    showWeatherError();
+    showNotification("City not found. Please try another name.", "warning");
+  }
+}
+
+async function fetchWeatherData(lat, lon, locationName) {
+  try {
+    // Fetch Weather
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
+    const weatherData = await weatherRes.json();
+
+    // Fetch AQI
+    const aqiRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi`);
+    const aqiData = await aqiRes.json();
+
+    updateWeatherUI(weatherData, aqiData, locationName);
+  } catch (err) {
+    console.error("Weather Fetch Error:", err);
+    showWeatherError();
+  }
+}
+
+function updateWeatherUI(weather, aqi, locationName) {
+  hideWeatherLoading();
+
+  const current = weather.current;
+  const daily = weather.daily;
+  const isHindi = State.currentLang === 'hi';
+
+  // Header
+  document.getElementById('weatherCityName').textContent = locationName;
+  const dateOpts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('weatherDate').textContent = new Date().toLocaleDateString(isHindi ? 'hi-IN' : 'en-US', dateOpts);
+
+  // Main Card
+  document.getElementById('currentTemp').textContent = Math.round(current.temperature_2m);
+  document.getElementById('currentWeatherIcon').textContent = weatherIcons[current.weather_code] || '🌤️';
+
+  const descDict = isHindi ? weatherDescriptionsHi : weatherDescriptionsEn;
+  document.getElementById('currentWeatherDesc').textContent = descDict[current.weather_code] || (isHindi ? 'अज्ञात' : 'Unknown');
+
+  // Metrics
+  document.getElementById('windSpeed').textContent = `${current.wind_speed_10m} km/h`;
+  document.getElementById('humidity').textContent = `${current.relative_humidity_2m}%`;
+  document.getElementById('visibility').textContent = `${(current.visibility / 1000).toFixed(1)} km`;
+
+  const aqiVal = aqi.current ? aqi.current.european_aqi : '--';
+  document.getElementById('aqi').textContent = aqiVal;
+
+  const aqiEl = document.getElementById('aqi');
+  if(aqiVal !== '--') {
+    if(aqiVal <= 20) aqiEl.style.color = '#22c55e'; // Good
+    else if(aqiVal <= 50) aqiEl.style.color = '#eab308'; // Fair
+    else if(aqiVal <= 100) aqiEl.style.color = '#f97316'; // Poor
+    else aqiEl.style.color = '#ef4444'; // Very poor
+  }
+
+  // 7-Day Forecast
+  const grid = document.getElementById('forecastGrid');
+  grid.innerHTML = '';
+  for(let i = 0; i < 7; i++) {
+    const date = new Date(daily.time[i]);
+    const dayName = date.toLocaleDateString(isHindi ? 'hi-IN' : 'en-US', { weekday: 'short' });
+    const wCode = daily.weather_code[i];
+    const wIcon = weatherIcons[wCode] || '🌤️';
+    const tMax = Math.round(daily.temperature_2m_max[i]);
+    const tMin = Math.round(daily.temperature_2m_min[i]);
+
+    const card = document.createElement('div');
+    card.className = 'forecast-card';
+    card.innerHTML = `
+      <span class="fc-day">${i === 0 ? (isHindi ? 'आज' : 'Today') : dayName}</span>
+      <span class="fc-icon">${wIcon}</span>
+      <div class="fc-temp">
+        <span class="fc-high">${tMax}°</span>
+        <span class="fc-low">${tMin}°</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+
+  // Show
+  document.getElementById('weatherDashboard').style.display = 'grid';
+}
+
+// Hook into existing language change
+const originalApplyLanguage = applyLanguage;
+applyLanguage = function(lang) {
+  originalApplyLanguage(lang);
+  // Re-translate placeholders manually if needed
+  const input = document.getElementById('weatherCityInput');
+  if(input) {
+    input.placeholder = input.getAttribute(`data-${lang}-placeholder`) || 'Enter city name...';
+  }
+  // Refresh weather text if already loaded
+  const city = document.getElementById('weatherCityName')?.textContent;
+  if(city && city !== 'City Name') {
+    if(city === 'My Location' || city === 'मेरा स्थान') {
+      getWeatherByLocation();
+    } else {
+      getWeatherByCity(city);
+    }
+  }
+};
+
+// ─────────────────────────────────────────────
+// PDF REPORT GENERATION (using jsPDF directly)
+// ─────────────────────────────────────────────
+function downloadReport() {
+  if (!State.lastResult) return;
+
+  const data = State.lastResult;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 20;
+
+  // Helper: wrap long text and handle page breaks
+  function addWrappedText(text, x, startY, maxWidth, lineHeight) {
+    const lines = doc.splitTextToSize(text || 'N/A', maxWidth);
+    lines.forEach(function(line) {
+      if (startY > 270) {
+        doc.addPage();
+        startY = 20;
+      }
+      doc.text(line, x, startY);
+      startY += lineHeight;
+    });
+    return startY;
+  }
+
+  // ── Header (green banner) ───────────────────
+  doc.setFillColor(22, 163, 74);
+  doc.rect(0, 0, pageWidth, 40, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PlantDoc AI Report', pageWidth / 2, 18, { align: 'center' });
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  var dateStr = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+  doc.text('Date: ' + dateStr, pageWidth / 2, 28, { align: 'center' });
+
+  doc.setFontSize(9);
+  doc.text('Powered by AI for Farmers Worldwide', pageWidth / 2, 35, { align: 'center' });
+
+  y = 52;
+
+  // ── Disease Name ────────────────────────────
+  doc.setTextColor(220, 38, 38);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.disease_name || 'Unknown Disease', margin, y);
+  y += 10;
+
+  // ── Status / Confidence / Severity Row ──────
+  doc.setFillColor(243, 244, 246);
+  doc.roundedRect(margin, y, contentWidth, 18, 3, 3, 'F');
+
+  doc.setTextColor(55, 65, 81);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+
+  var statusLabel = data.is_healthy ? 'Healthy' : 'Infected';
+  var confPercent = Math.round(data.confidence_score * 100);
+  var severity = data.severity || 'Mild';
+
+  doc.text('Status: ', margin + 5, y + 11);
+  doc.setFont('helvetica', 'normal');
+  if (data.is_healthy) { doc.setTextColor(22, 163, 74); }
+  else { doc.setTextColor(239, 68, 68); }
+  doc.text(statusLabel, margin + 23, y + 11);
+
+  doc.setTextColor(55, 65, 81);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Confidence: ', margin + 60, y + 11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(confPercent + '%', margin + 85, y + 11);
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Severity: ', margin + 110, y + 11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(severity, margin + 130, y + 11);
+
+  y += 28;
+
+  // ── Description Section ─────────────────────
+  doc.setDrawColor(22, 163, 74);
+  doc.setLineWidth(0.8);
+  doc.line(margin, y, margin + contentWidth, y);
+  y += 8;
+
+  doc.setTextColor(22, 163, 74);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Description', margin, y);
+  y += 7;
+
+  doc.setTextColor(55, 65, 81);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  var descText = data.description_en || data.description || 'No description available.';
+  y = addWrappedText(descText, margin, y, contentWidth, 5);
+  y += 6;
+
+  // ── Treatment Section ───────────────────────
+  doc.setDrawColor(22, 163, 74);
+  doc.line(margin, y, margin + contentWidth, y);
+  y += 8;
+
+  doc.setTextColor(22, 163, 74);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Recommended Treatment', margin, y);
+  y += 7;
+
+  doc.setTextColor(55, 65, 81);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  var treatText = data.treatment_en || data.treatment || 'No treatment information available.';
+  y = addWrappedText(treatText, margin, y, contentWidth, 5);
+  y += 6;
+
+  // ── Prevention Section ──────────────────────
+  doc.setDrawColor(22, 163, 74);
+  doc.line(margin, y, margin + contentWidth, y);
+  y += 8;
+
+  doc.setTextColor(22, 163, 74);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Prevention Tips', margin, y);
+  y += 7;
+
+  doc.setTextColor(55, 65, 81);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  var prevText = data.prevention_en || data.prevention || 'No prevention information available.';
+  y = addWrappedText(prevText, margin, y, contentWidth, 5);
+  y += 10;
+
+  // ── Footer ──────────────────────────────────
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, 282, margin + contentWidth, 282);
+  doc.setTextColor(156, 163, 175);
+  doc.setFontSize(8);
+  doc.text('Generated by PlantDoc AI - Empowering Farmers Worldwide', pageWidth / 2, 288, { align: 'center' });
+
+  // ── Save ────────────────────────────────────
+  var cleanName = data.disease_name.replace(/[^a-zA-Z0-9_]/g, '_');
+  doc.save('PlantDoc_Report_' + cleanName + '.pdf');
+
+  showNotification('Report downloaded successfully!', 'success');
+}
+
+
