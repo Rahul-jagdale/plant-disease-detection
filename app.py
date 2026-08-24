@@ -64,7 +64,7 @@ def get_ai_description(disease_name, confidence, is_healthy, lang='en'):
         return None
     try:
         genai.configure(api_key=api_key)
-        gemini = genai.GenerativeModel("gemini-2.0-flash")
+        gemini = genai.GenerativeModel("gemini-2.5-flash")
         lang_instruction = "Reply in Hindi only." if lang == 'hi' else "Reply in English only."
         if is_healthy:
             prompt = f"""{lang_instruction}

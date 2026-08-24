@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGRI SCAN - प्रोजेक्ट विवा गाइड (Class Viva Guide)</title>
+  
+  <!-- Google Fonts for premium Devanagari typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-dark: #166534;
+      --primary-light: #dcfce7;
+      --text-dark: #1f2937;
+      --text-muted: #4b5563;
+      --bg-light: #f8fafc;
+      --border-color: #e2e8f0;
+      --font-hindi: 'Noto Sans Devanagari', sans-serif;
+      --font-english: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-hindi);
+      color: var(--text-dark);
+      background-color: var(--bg-light);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 50px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Print & Action Bar */
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px dashed var(--border-color);
+    }
+
+    .action-info {
+      font-family: var(--font-english);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .print-btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-family: var(--font-hindi);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+    }
+
+    .print-btn:hover {
+      background-color: var(--primary-dark);
+    }
+
+    /* Header Styling */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .project-badge {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: var(--primary-dark);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+      font-weight: 600;
+    }
+
+    p {
+      margin-bottom: 15px;
+      text-align: justify;
+      color: #374151;
+    }
+
+    /* Tech Stack Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px 15px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    /* QA Cards */
+    .qa-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+
+    .question {
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      display: flex;
+      gap: 8px;
+    }
+
+    .answer {
+      color: var(--text-dark);
+      padding-left: 28px;
+    }
+
+    .tech-term {
+      font-family: var(--font-english);
+      font-weight: 600;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #0f172a;
+    }
+
+    /* Print Specific styles */
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+      }
+
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+
+      .action-bar {
+        display: none;
+      }
+
+      .qa-card {
+        background: transparent;
+        border: 1px solid #cbd5e1;
+      }
+
+      h1 {
+        color: black !important;
+      }
+
+      h2 {
+        color: black !important;
+        border-left-color: black !important;
+      }
+
+      .question {
+        color: black !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- TOP BAR (Hides when printed) -->
+    <div class="action-bar">
+      <div class="action-info">
+        📄 Windows: Open in browser and Press <strong>Ctrl + P</strong> to save as PDF.
+      </div>
+      <button class="print-btn" onclick="window.print()">
+        🖨️ PDF डाउनलोड करें (Print to PDF)
+      </button>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+      <div class="project-badge">AGRI SCAN (कृषि स्कैन)</div>
+      <h1>प्रोजेक्ट विवा गाइड (Viva Examination Guide)</h1>
+      <p class="subtitle">AI-आधारित फसल रोग पहचान प्रणाली (AI-Powered Plant Disease Detection System)</p>
+    </header>
+
+    <!-- PROJECT OVERVIEW -->
+    <section>
+      <h2>परियोजना का परिचय (Project Overview)</h2>
+      <p>
+        <strong>AGRI SCAN</strong> एक वेब-आधारित AI एप्लीकेशन है जो किसानों और कृषि विशेषज्ञों को फसलों (पौधों) के पत्तों की फोटो देखकर तुरंत उनकी बीमारियों की पहचान करने में मदद करती है। इस सिस्टम में डीप लर्निंग मॉडल का उपयोग करके पत्तों की इमेज का विश्लेषण किया जाता है, जिसके बाद प्रभावित बीमारियों की सटीक जानकारी और उपचार के सुझाव प्रदान किए जाते हैं।
+      </p>
+    </section>
+
+    <!-- SYSTEM ARCHITECTURE -->
+    <section>
+      <h2>सिस्टम का तकनीकी स्टैक (Technology Stack)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>घटक (Component)</th>
+            <th>तकनीक (Technology Used)</th>
+            <th>विवरण (Description / Role)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Frontend</strong></td>
+            <td>HTML5, CSS3, JavaScript (Vanilla)</td>
+            <td>यूजर इंटरफेस, फाइल ड्रैग-एंड-ड्रॉप, हिंदी-अंग्रेजी भाषा बदलाव (Localization), तथा PDF रिपोर्ट डाउनलोड।</td>
+          </tr>
+          <tr>
+            <td><strong>Backend Framework</strong></td>
+            <td>Python + Flask</td>
+            <td>हल्का और तेज वेब सर्वर जो फ्रंटएंड से इमेज प्राप्त करता है, डीप लर्निंग मॉडल चलाता है, और परिणाम लौटाता है।</td>
+          </tr>
+          <tr>
+            <td><strong>Deep Learning Model</strong></td>
+            <td>TensorFlow / Keras + MobileNetV2</td>
+            <td><strong>PlantVillage dataset</strong> पर प्रशिक्षित (~95% सटीकता) जो पत्तों की 38 से अधिक श्रेणियों की पहचान करता है।</td>
+          </tr>
+          <tr>
+            <td><strong>Generative AI Integration</strong></td>
+            <td>Google Gemini API (gemini-2.5-flash)</td>
+            <td>बीमारी की पहचान होने के बाद, यह मॉडल वास्तविक समय में हिंदी और अंग्रेजी में उपचार, सलाह, और बचाव के तरीके उत्पन्न करता है।</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CORE WORKFLOW -->
+    <section>
+      <h2>कार्यप्रणाली (How it Works - Step by Step)</h2>
+      <p>
+        1. <strong>इमेज अपलोड:</strong> किसान या यूजर अपने बीमार पौधे की पत्ती की तस्वीर फ्रंटएंड पर अपलोड करता है।<br>
+        2. <strong>मॉडल प्रोसेसिंग:</strong> Flask बैकएंड छवि को रिसाइज (Resize) करके <span class="tech-term">MobileNetV2</span> न्यूरल नेटवर्क मॉडल को भेजता है।<br>
+        3. <strong>बीमारी की पहचान:</strong> मॉडल छवि का विश्लेषण कर उच्चतम संभावना (Confidence Score) के साथ बीमारी का नाम बताता है।<br>
+        4. <strong>AI प्रिस्क्रिप्शन (Gemini integration):</strong> बैकएंड तुरंत <span class="tech-term">Gemini 2.5 Flash</span> मॉडल को प्रॉम्ट भेजता है जो बीमारी के आधार पर व्यावहारिक और किसान-अनुकूल जैविक/रासायनिक उपचार (Hindi & English में) देता है।<br>
+        5. <strong>रिपोर्ट जेनरेशन:</strong> यूजर को परिणाम स्क्रीन पर दिखते हैं और वह एक सुंदर PDF रिपोर्ट डाउनलोड कर सकता है।
+      </p>
+    </section>
+
+    <!-- VIVA QUESTIONS -->
+    <section>
+      <h2>संभावित विवा प्रश्न और उत्तर (Expected Viva Q&A)</h2>
+
+      <!-- Q1 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q1.</span>
+          <span>इस प्रोजेक्ट का मुख्य उद्देश्य क्या है?</span>
+        </div>
+        <div class="answer">
+          यह प्रोजेक्ट ग्रामीण क्षेत्रों में किसानों की सहायता के लिए बनाया गया है। बिना किसी कृषि विशेषज्ञ के, किसान सिर्फ एक फोटो खींचकर अपनी फसल की बीमारी का पता लगा सकते हैं और जैविक एवं रासायनिक उपचार तुरंत पा सकते हैं जिससे फसल का नुकसान होने से बचाया जा सके।
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q2.</span>
+          <span>बैकएंड के लिए Flask का उपयोग क्यों किया गया, Django का क्यों नहीं?</span>
+        </div>
+        <div class="answer">
+          <span class="tech-term">Flask</span> एक माइक्रो-फ्रेमवर्क (Micro-framework) है जो हल्का, लचीला और तेज है। हमारी मशीन लर्निंग भविष्यवाणी (Machine Learning Inference) और API कॉल्स के लिए हमें बड़े और भारी फ्रेमवर्क जैसे <span class="tech-term">Django</span> की आवश्यकता नहीं थी। Flask प्रोजेक्ट को जल्दी और कुशलता से चलाने के लिए पर्याप्त है।
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q3.</span>
+          <span>आपने कौन से Deep Learning मॉडल का उपयोग किया है और क्यों?</span>
+        </div>
+        <div class="answer">
+          हमने <span class="tech-term">MobileNetV2</span> न्यूरल नेटवर्क आर्किटेक्चर का उपयोग किया है। यह मॉडल अत्यधिक हल्का (lightweight) और मोबाइल/एज उपकरणों पर चलने के लिए अनुकूलित (optimized) है। यह कम कंप्यूटिंग संसाधनों के साथ भी उच्च सटीकता (~95%) और तेज परिणाम देता है।
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q4.</span>
+          <span>प्रोजेक्ट में Gemini API का क्या कार्य है?</span>
+        </div>
+        <div class="answer">
+          टेंसरफ्लो (TensorFlow) मॉडल केवल बीमारी का नाम बता सकता है। लेकिन किसान को बीमारी के समाधान की आवश्यकता होती है। हमने <span class="tech-term">Gemini 2.5 Flash</span> मॉडल को इंटीग्रेट किया है जो बीमारी की सटीक पहचान के आधार पर वास्तविक समय में विस्तृत और सुलभ उपचार गाइड (हिंदी और अंग्रेजी में) तैयार करता है।
+        </div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q5.</span>
+          <span>यदि इंटरनेट कनेक्शन न हो या Gemini API काम न करे तो क्या होगा?</span>
+        </div>
+        <div class="answer">
+          हमने प्रोजेक्ट में एक फॉलबैक सिस्टम (Fallback System) रखा है। यदि Gemini API की लिमिट समाप्त हो जाती है या नेटवर्क विफलता होती है, तो सिस्टम हमारे कोडबेस में पहले से सेव किए गए बीमारी के स्थानीय डेटाबेस (Local Database) से पूर्वनिर्धारित (predefined) विवरण और उपचार निकालकर किसान को दिखाता है। इससे सेवा कभी रुकती नहीं है।
+        </div>
+      </div>
+
+      <!-- Q6 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q6.</span>
+          <span>प्रोजेक्ट को बहुभाषी (Multi-lingual) बनाने के लिए क्या किया गया है?</span>
+        </div>
+        <div class="answer">
+          भारत के किसानों को ध्यान में रखते हुए हमने फ्रंटएंड और बैकएंड दोनों स्तरों पर द्विभाषी (Hindi और English) सपोर्ट दिया है। फ्रंटएंड पर एक टॉगल बटन है जो पूरी वेबसाइट की भाषा बदल देता है और बैकएंड में Gemini को निर्देश दिया जाता है कि वह किसान की चुनी गई भाषा के अनुसार ही परिणाम उत्पन्न करे।
+        </div>
+      </div>
+
+      <!-- Q7 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q7.</span>
+          <span>मॉडल को किस डेटासेट पर ट्रेन किया गया है?</span>
+        </div>
+        <div class="answer">
+          इस मॉडल को प्रसिद्ध <strong>PlantVillage</strong> डेटासेट पर प्रशिक्षित किया गया है। इसमें टमाटर, आलू, मक्का, सेब, अंगूर जैसी विभिन्न फसलों के स्वस्थ और रोगग्रस्त पत्तों की हजारों तस्वीरें हैं, जो कुल 38 श्रेणियों में विभाजित हैं।
+        </div>
+      </div>
+
+      <!-- Q8 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q8.</span>
+          <span>Confidence Score (विश्वास स्कोर) क्या दर्शाता है?</span>
+        </div>
+        <div class="answer">
+          यह स्कोर यह दर्शाता है कि हमारा न्यूरल नेटवर्क मॉडल लीफ इमेज में बीमारी को पहचानने के प्रति कितना आश्वस्त है। यदि Confidence Score 60% से कम होता है, तो सिस्टम उपयोगकर्ता से एक साफ और स्पष्ट फोटो दोबारा अपलोड करने का अनुरोध करता है ताकि गलत इलाज न बताया जा सके।
+        </div>
+      </div>
+
+      <!-- Q9 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q9.</span>
+          <span>सुरक्षा के लिए API Key को कोड में कैसे रखा गया है?</span>
+        </div>
+        <div class="answer">
+          सुरक्षा कारणों से, हमने API Key को सीधे कोड (hardcode) में नहीं लिखा है। इसे हमने एक एनवायरनमेंट फाइल <span class="tech-term">.env</span> में सुरक्षित रखा है, और `python-dotenv` पैकेज का उपयोग करके इसे लोड किया जाता है। इससे संवेदनशील डेटा सुरक्षित रहता है।
+        </div>
+      </div>
+
+      <!-- Q10 -->
+      <div class="qa-card">
+        <div class="question">
+          <span>Q10.</span>
+          <span>इस परियोजना का भविष्य में विस्तार कैसे किया जा सकता है?</span>
+        </div>
+        <div class="answer">
+          भविष्य में, हम इस प्रणाली को मोबाइल ऐप में बदल सकते हैं, मौसम के पूर्वानुमान को जोड़कर रोगों की पूर्व चेतावनी दे सकते हैं, और किसानों को उनके नजदीकी जैविक खाद और कीटनाशक विक्रेताओं से सीधे जोड़ने की सुविधा प्रदान कर सकते हैं।
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+</body>
+</html>
